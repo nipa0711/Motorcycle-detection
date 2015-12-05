@@ -57,7 +57,9 @@ public:
 	afx_msg void OnBnClickedSelectvideo();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	CStatic Show_Processed;
+	CString strPathName;
 
 	String motobike_cascade_name = "cascade.xml"; // cascade 불러오기
 	CascadeClassifier motorbike_cascade;
+	VideoCapture capture;
 };

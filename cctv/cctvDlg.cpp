@@ -47,8 +47,6 @@ END_MESSAGE_MAP()
 
 // CcctvDlg 대화 상자
 
-
-
 CcctvDlg::CcctvDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_CCTV_DIALOG, pParent)
 	, strAddress(_T(""))
@@ -191,7 +189,7 @@ void CcctvDlg::OnBnClickedConfirm()
 		CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, _T("Image(*.BMP,*.JPG,*.PNG)|*.BMP;*.JPG;*.PNG|All Files(*.*)|*.*||"));
 		if (IDOK == dlg.DoModal())
 		{
-			CString strPathName = dlg.GetPathName();
+			strPathName = dlg.GetPathName();
 			OriginalMat = imread(CStrToStr(strPathName));
 			strAddress = strPathName;
 			UpdateData(FALSE); // 변수 값을 컨트롤로
@@ -214,13 +212,28 @@ void CcctvDlg::OnBnClickedConfirm()
 
 	case 2:
 	{
-		CString strPathName;
+		Mat temp;
+
 		CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, _T("Video(*.MP4,*.AVI)|*.MP4;*.AVI;|All Files(*.*)|*.*||"));
 		if (IDOK == dlg.DoModal())
 		{
 			strPathName = dlg.GetPathName();
-		}
-		SetTimer(1, 30, NULL);
+
+			capture.open(CStrToStr(strPathName));
+			//MessageBox(_T("" + strPathName), _T("PATH"));
+
+			strAddress = strPathName;
+			UpdateData(FALSE); // 변수 값을 컨트롤로
+
+			if (!capture.isOpened())
+			{
+				MessageBox(_T("Error loading Video"), _T("Warning"));
+			}
+			else
+			{
+				SetTimer(1, 30, NULL);
+			}
+		}		
 	}
 
 	break;
@@ -232,6 +245,11 @@ void CcctvDlg::OnBnClickedConfirm()
 
 void CcctvDlg::Process(Mat input)
 {
+	if (!motorbike_cascade.load(motobike_cascade_name))
+	{
+		MessageBox(_T("Error loading Cascade"), _T("Error"));
+	}
+
 	std::vector<Rect> motorbike;
 	Mat frame_gray;
 
@@ -244,13 +262,13 @@ void CcctvDlg::Process(Mat input)
 	for (size_t i = 0; i < motorbike.size(); i++)
 	{
 		rectangle(input, Point(motorbike[i].x, motorbike[i].y), Point(motorbike[i].x + motorbike[i].width, motorbike[i].y + motorbike[i].height), Scalar(255, 0, 255), 2, 8, 0);
-
-		Mat faceROI = frame_gray(motorbike[i]);
 	}
 
 	IplImage1 = input;
 	m_CVvImageObj1.CopyOf(&IplImage1);
 	m_CVvImageObj1.DrawToHDC(hDC2, &rect2);
+
+	frame_gray.release();
 }
 
 string CcctvDlg::CStrToStr(CString str)
@@ -310,10 +328,20 @@ void CcctvDlg::OnBnClickedSelectvideo()
 void CcctvDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
-
+	
 	if (nIDEvent == 1)
 	{
+		capture >> FRAME;
+		OriginalMat = FRAME;
 
+		if (!FRAME.empty())
+		{
+			IplImage1 = OriginalMat;
+			m_CVvImageObj1.CopyOf(&IplImage1);
+			m_CVvImageObj1.DrawToHDC(hDC1, &rect);
+
+			Process(FRAME);
+		}		
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
