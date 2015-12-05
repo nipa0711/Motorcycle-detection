@@ -1,3 +1,12 @@
+/*
+*   인공지능 수업 마지막 과제
+*   제작 : 조현민
+*   날짜 : 2015/11/23 ~ 2015/12/08
+* 
+*   nipa0711@gmail.com
+*   http://www.nipa0711.net
+*/
+
 
 // cctvDlg.cpp : 구현 파일
 //
@@ -67,8 +76,8 @@ BEGIN_MESSAGE_MAP(CcctvDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_Confirm, &CcctvDlg::OnBnClickedConfirm)
-	ON_BN_CLICKED(IDC_SelectImage, &CcctvDlg::OnBnClickedSelectimage)
-	ON_BN_CLICKED(IDC_SelectVideo, &CcctvDlg::OnBnClickedSelectvideo)
+	ON_BN_CLICKED(IDC_SelectImage, &CcctvDlg::OnBnClickedSelectImage)
+	ON_BN_CLICKED(IDC_SelectVideo, &CcctvDlg::OnBnClickedSelectVideo)
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
@@ -118,7 +127,7 @@ BOOL CcctvDlg::OnInitDialog()
 
 	CButton* pButton = (CButton*)GetDlgItem(IDC_SelectImage);
 	pButton->SetCheck(TRUE);
-	selectChk = 1;
+	selectChk = 1; // 초기 선택값은 이미지
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -220,7 +229,7 @@ void CcctvDlg::OnBnClickedConfirm()
 			strPathName = dlg.GetPathName();
 
 			capture.open(CStrToStr(strPathName));
-			//MessageBox(_T("" + strPathName), _T("PATH"));
+			//MessageBox(_T("" + strPathName), _T("PATH")); // 경로 확인용
 
 			strAddress = strPathName;
 			UpdateData(FALSE); // 변수 값을 컨트롤로
@@ -231,7 +240,7 @@ void CcctvDlg::OnBnClickedConfirm()
 			}
 			else
 			{
-				SetTimer(1, 30, NULL);
+				SetTimer(1, 30, NULL); // ID, 밀리초마다
 			}
 		}		
 	}
@@ -245,7 +254,7 @@ void CcctvDlg::OnBnClickedConfirm()
 
 void CcctvDlg::Process(Mat input)
 {
-	if (!motorbike_cascade.load(motobike_cascade_name))
+	if (!motorbike_cascade.load(motobike_cascade_name)) // cascade 로딩 확인
 	{
 		MessageBox(_T("Error loading Cascade"), _T("Error"));
 	}
@@ -253,15 +262,26 @@ void CcctvDlg::Process(Mat input)
 	std::vector<Rect> motorbike;
 	Mat frame_gray;
 
-	cvtColor(input, frame_gray, COLOR_BGR2GRAY);
-	equalizeHist(frame_gray, frame_gray);
+	cvtColor(input, frame_gray, COLOR_BGR2GRAY); // BGR 영상을 GRAY 영상으로 변환
+	equalizeHist(frame_gray, frame_gray); // 히스토그램 균등화
 
 	//-- Detect motorbike
 	motorbike_cascade.detectMultiScale(frame_gray, motorbike, 1.1, 6, 0 | CASCADE_FIND_BIGGEST_OBJECT, Size(30, 30));  // CASCADE_SCALE_IMAGE
+	
+	/* 
+	InputArray image, vector<Rect>& objects, double scaleFactor=1.1, int minNeighbors=3, int flags=0, Size minSize=Size()
+
+	objects ? Vector of rectangles where each rectangle contains the detected object, the rectangles may be partially outside the original image.
+	numDetections ? Vector of detection numbers for the corresponding objects. An object’s number of detections is the number of neighboring positively classified rectangles that were joined together to form the object.
+	scaleFactor ? Parameter specifying how much the image size is reduced at each image scale.
+	minNeighbors ? Parameter specifying how many neighbors each candidate rectangle should have to retain it.
+	flags ? Parameter with the same meaning for an old cascade as in the function cvHaarDetectObjects. It is not used for a new cascade.
+	minSize ? Minimum possible object size. Objects smaller than that are ignored.
+	*/
 
 	for (size_t i = 0; i < motorbike.size(); i++)
 	{
-		rectangle(input, Point(motorbike[i].x, motorbike[i].y), Point(motorbike[i].x + motorbike[i].width, motorbike[i].y + motorbike[i].height), Scalar(255, 0, 255), 2, 8, 0);
+		rectangle(input, Point(motorbike[i].x, motorbike[i].y), Point(motorbike[i].x + motorbike[i].width, motorbike[i].y + motorbike[i].height), Scalar(255, 0, 255), 2, 8, 0); // 2- 선두께, 8- 선타입
 	}
 
 	IplImage1 = input;
@@ -271,7 +291,7 @@ void CcctvDlg::Process(Mat input)
 	frame_gray.release();
 }
 
-string CcctvDlg::CStrToStr(CString str)
+string CcctvDlg::CStrToStr(CString str) // CString 형을 String 형으로 변환
 {
 	string outputStr = string(CT2CA(str.operator LPCWSTR()));
 	return outputStr;
@@ -306,20 +326,18 @@ CBitmap* CcctvDlg::IplImageToCBitmap(IplImage* img)
 	return bmp;
 }
 
-void CcctvDlg::OnBnClickedSelectimage()
+void CcctvDlg::OnBnClickedSelectImage()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-
 	CButton* pButton = (CButton*)GetDlgItem(IDC_SelectImage);
 	pButton->SetCheck(TRUE);
 	selectChk = 1;
 }
 
 
-void CcctvDlg::OnBnClickedSelectvideo()
+void CcctvDlg::OnBnClickedSelectVideo()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-
 	CButton* pButton = (CButton*)GetDlgItem(IDC_SelectVideo);
 	pButton->SetCheck(TRUE);
 	selectChk = 2;
@@ -341,7 +359,12 @@ void CcctvDlg::OnTimer(UINT_PTR nIDEvent)
 			m_CVvImageObj1.DrawToHDC(hDC1, &rect);
 
 			Process(FRAME);
-		}		
+		}
+		else
+		{
+			KillTimer(1); // 타이머 종료
+			MessageBox(_T("동영상 종료"), _T("Notice"));
+		}
 	}
 
 	CDialogEx::OnTimer(nIDEvent);

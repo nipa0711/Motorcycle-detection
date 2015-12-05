@@ -1,3 +1,11 @@
+/*
+*   인공지능 수업 마지막 과제
+*   제작 : 조현민
+*   날짜 : 2015/11/23 ~ 2015/12/08
+*
+*   nipa0711@gmail.com
+*   http://www.nipa0711.net
+*/
 
 // cctvDlg.h : 헤더 파일
 //
@@ -52,9 +60,9 @@ public:
 	Mat OriginalMat, ProcessedMat;
 	void Process(Mat input);
 	
-	afx_msg void OnBnClickedSelectimage();
+	afx_msg void OnBnClickedSelectImage();
 	int selectChk = 1;
-	afx_msg void OnBnClickedSelectvideo();
+	afx_msg void OnBnClickedSelectVideo();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	CStatic Show_Processed;
 	CString strPathName;
